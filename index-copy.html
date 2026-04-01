@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Village Event Registration</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root{
+            --glass-bg: rgba(255,255,255,0.12);
+            --glass-border: rgba(255,255,255,0.18);
+            --card-radius: 16px;
+            --accent: #2ea44f;
+            --muted: #5b6b56;
+        }
+
+        html,body{height:100%;margin:0;font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+        body{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:28px;
+            background: linear-gradient(180deg, #e9f8ed 0%, #e1f6de 50%, #f0fff4 100%);
+            -webkit-font-smoothing:antialiased;
+        }
+
+        .wrap{
+            max-width:1100px;
+            width:100%;
+            display:grid;
+            grid-template-columns: 1fr 460px;
+            gap:28px;
+            align-items:start;
+        }
+
+        /* LEFT: flyer */
+        .left{
+            display:flex;
+            align-items:flex-start;
+            justify-content:center;
+        }
+        .flyer{
+            width:100%;
+            max-width:620px;
+            border-radius:18px;
+            overflow:hidden;
+            box-shadow: 0 12px 30px rgba(16,24,40,0.08);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .flyer img{ display:block; width:100%; height:auto; object-fit: cover ; }
+
+        /* RIGHT: glass card */
+        .right{
+            border-radius:var(--card-radius);
+            padding:20px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+            border:1px solid var(--glass-border);
+            backdrop-filter: blur(10px) saturate(130%);
+            -webkit-backdrop-filter: blur(10px) saturate(130%);
+            box-shadow: 0 8px 30px rgba(16,24,40,0.06);
+        }
+
+        .title{
+            font-size:20px;
+            font-weight:800;
+            margin:0 0 6px 0;
+            color:#08311b;
+        }
+        .subtitle{ color:var(--muted); margin:0 0 16px 0; font-weight:600; font-size:13px }
+
+        label{ display:block; font-weight:700; margin-top:12px; color:#0b3b18; font-size:13px }
+        input[type="text"], input[type="tel"], select {
+            width:100%;
+            padding:12px 14px;
+            margin-top:8px;
+            border-radius:12px;
+            border:1px solid rgba(8,24,16,0.06);
+            background: rgba(255,255,255,0.9);
+            font-size:15px;
+            color:#04260f;
+            box-sizing:border-box;
+        }
+
+        .row{ display:flex; gap:10px; align-items:center; }
+        .btn{
+            margin-top:16px;
+            padding:12px;
+            border-radius:12px;
+            border:0;
+            background:linear-gradient(180deg,#1b8a3b,#12702a);
+            color:white;
+            font-weight:800;
+            cursor:pointer;
+            width:100%;
+            font-size:15px;
+        }
+        .btn[disabled]{ opacity:0.6; cursor:not-allowed; transform:none }
+
+        .result{
+            margin-top:16px;
+            padding:14px;
+            border-radius:12px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.95));
+            color:#04260f;
+            border:1px solid rgba(5,45,16,0.06);
+        }
+
+        .color-box{
+            height:84px;
+            border-radius:10px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:800;
+            font-size:18px;
+            color:white;
+            margin-bottom:10px;
+        }
+
+        .suggestions{ font-size:14px; color:#053018; line-height:1.4 }
+        .whatsapp{ margin-top:10px; display:inline-block; padding:8px 12px; background:#25D366; color:#062e1a; border-radius:10px; text-decoration:none; font-weight:700 }
+
+        .donation{ margin-top:14px; font-size:13px; color:var(--muted) }
+
+        @media (max-width:980px){
+            .wrap{ grid-template-columns: 1fr; }
+            .left, .right{ width:100% }
+            .flyer{ max-width:100%; }
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="wrap">
+
+    <!-- LEFT SIDE (Image) -->
+        <div class="left">
+            <div class="flyer" role="img" aria-label="event flyer">
+                <img src="picnicflier.jpeg" alt="The Village Picnic flyer">
+            </div>
+        </div>
+
+    <!-- RIGHT SIDE (Form + info) -->
+    <div class="right" aria-live="polite">
+        <div class="title">THE VILLAGE PICNIC 2025</div>
+        <div class="subtitle">13 Dec 2025 • 2pm — 155 Mobolaji Bank Johnson Ave, Alausa, Ikeja</div>
+
+        <label for="name">Enter Name</label>
+        <input id="name" type="text" placeholder="Full name">
+
+        <label for="contact">Phone Number</label>
+        <input id="contact" type="tel" placeholder="+234 801 234 5678">
+
+        <label for="bus">Do you stay on the island and would like to follow the bus?</label>
+        <select id="bus" aria-describedby="busHelp">
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+        </select>
+        <div id="busHelp" style="font-size:13px;color:var(--muted); margin-top:8px">If you select Yes, we'll show the WhatsApp bus link.</div>
+
+        <button id="pickColorBtn" class="btn" type="button">Get my colour</button>
+
+        <div id="resultBox" class="result-box" style="display:none" aria-hidden="true">
+            <div id="assignedColor" class="color-box">COLOUR</div>
+            <div id="textSuggest" class="suggestions"></div>
+            <div id="busLinkWrap" style="margin-top:8px"></div>
+        </div>
+
+        <div class="notice">
+            Can't bring anything? Please give towards the picnic — <strong>CITY CHURCH - THE VILLAGE</strong> • Access Bank • 1861224431
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ===== Firebase Config =====
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwXcgw1gnBCovwO2wLDghhF5dKLuL5hy0",
+        authDomain: "picniccolor.firebaseapp.com",
+        projectId: "picniccolor",
+        storageBucket: "picniccolor.firebasestorage.app",
+        messagingSenderId: "1031163003082",
+        appId: "1:1031163003082:web:e4aa982ade319747d17433",
+        measurementId: "G-CDE15XQFM6"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const colors = ['Red', 'Orange', 'Green', 'Yellow', 'Blue', 'Violet', 'White', 'Black'];
+
+    const itemsForColor = {
+        Red: "Bring: Small chops / Plates / Drinks",
+        Orange: "Bring: Water / Cups / Snacks",
+        Green: "Bring: Tissue / Cutlery / Drinks",
+        Yellow: "Bring: Fruit / Drinks / Plates",
+        Blue: "Bring: Drinks / Napkins / Water",
+        Violet: "Bring: Small chops / Drinks",
+        White: "Bring: Water / Serviettes",
+        Black: "Bring: Drinks / Cups"
+    };
+
+    const btn = document.getElementById('pickColorBtn');
+    const resultBox = document.getElementById('resultBox');
+    const assignedColorText = document.getElementById('assignedColor');
+    const busSelect = document.getElementById('bus');
+
+    // SHOW WHATSAPP LINK IF USER SELECTS YES
+    busSelect.addEventListener('change', () => {
+        if (busSelect.value === "yes") {
+            resultBox.style.display = "block";
+            resultBox.innerHTML = `
+                <p><strong>Bus Info:</strong></p>
+                <a href="https://wa.me/2349025159433" target="_blank">
+                    Click here to join the bus WhatsApp group
+                </a>
+            `;
+        } else {
+            resultBox.style.display = "none";
+            resultBox.innerHTML = "";
+        }
+    });
+
+    // MAIN COLOR PICK LOGIC
+    btn.addEventListener('click', async () => {
+        const name = document.getElementById('name').value.trim();
+        const contact = document.getElementById('contact').value.trim();
+
+        if (!name) { alert('Please enter your name'); return; }
+        if (!contact) { alert('Please enter your phone number'); return; }
+
+        // Disable button so user can only generate once
+        btn.disabled = true;
+        btn.textContent = "Color Assigned";
+
+        // Pick a random color
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        assignedColorText.textContent = `Your color: ${color}`;
+
+        // Suggest item based on color
+        resultBox.style.display = "block";
+        resultBox.innerHTML = `<p>${itemsForColor[color]}</p>`;
+
+        // If they picked "Yes" earlier, show WhatsApp link *in addition*
+        if (busSelect.value === "yes") {
+            resultBox.innerHTML += `
+                <br>
+                <a href="https://wa.me/2349025159433" target="_blank">
+                    Join the Bus WhatsApp Group
+                </a>
+            `;
+        }
+
+        // Save to Firestore
+        try {
+            await db.collection('responses').add({
+                name,
+                contact,
+                color,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('Saved to Firebase!');
+        } catch (err) {
+            console.error('Error saving to Firebase:', err);
+            alert('Could not save. Try again.');
+        }
+    });
+</script>
+
+
+</body>
+</html>

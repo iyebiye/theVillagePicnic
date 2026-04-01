@@ -1,0 +1,3 @@
+[build]
+  publish = "."  # your front-end root
+  functions = "api"  # folder containing your serverless functions

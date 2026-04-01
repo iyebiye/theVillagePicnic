@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>The Village Picnic — Color Picker</title>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body{
+            margin:0;
+            font-family:"Poppins",sans-serif;
+            /*background: linear-gradient(180deg,#e9f8ed,#dff4e0,#ecffee);*/
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            /* Muted pastel gradient */
+            background: linear-gradient(135deg, #e58b8b, #f2b57d, #fff3a3, #a3e5a3, #a3c5f2, #c5a3e5);
+            background-size: 300% 300%;
+
+            /* Animate the gradient diagonally */
+            animation: gradientShift 40s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 0%;
+            }
+            50% {
+                background-position: 100% 100%;
+            }
+            100% {
+                background-position: 0% 0%;
+            }
+        }
+
+        /* ----------------------------------------
+           GLASS CONTAINERS
+        ---------------------------------------- */
+        .glass {
+            background: rgba(67,100,55,0.15); /* semi-transparent #436437 */
+            backdrop-filter: blur(14px) saturate(140%);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            border-radius:18px;
+            border:1px solid rgba(67,100,55,0.28); /* subtle border in primary color */
+            box-shadow:0 10px 28px rgba(67,100,55,0.08); /* shadow using primary */
+            padding:26px;
+        }
+
+        /* ----------------------------------------
+           SCREEN LAYOUT
+        ---------------------------------------- */
+        .screen{
+            display:none;
+            max-width:460px;
+            width:100%;
+        }
+        .screen.active{
+            display:block;
+        }
+
+        label{ display:block;  margin-top:12px; color:#0b3b18; font-size:13px }
+        input[type="text"], input[type="tel"], select {
+            width:100%;
+            padding:12px 14px;
+            margin-top:8px;
+            border-radius:12px;
+            border:1px solid rgba(8,24,16,0.06);
+            background: rgba(255,255,255,0.9);
+            font-size:15px;
+            color:#04260f;
+            box-sizing:border-box;
+        }
+
+        input,select{
+            width:100%;
+            padding:12px;
+            margin-top:10px;
+            border-radius:12px;
+            border:1px solid rgba(0,0,0,0.15);
+            font-size:15px;
+        }
+
+        button{
+            width:100%;
+            margin-top:16px;
+            padding:14px;
+            border-radius:12px;
+            border:none;
+            background:#436437;
+            color:white;
+            font-weight:700;
+            font-size:16px;
+            cursor:pointer;
+        }
+        button:disabled{
+            opacity:0.6;
+            cursor:not-allowed;
+        }
+
+        /* Result screen */
+        .color-box{
+            margin-top:12px;
+            height:90px;
+            border-radius:12px;
+            color:white;
+            font-size:22px;
+            font-weight:800;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+
+        .suggestions{
+            margin:16px 0;
+            font-size:15px;
+        }
+
+        .whatsapp{
+            display:inline-block;
+            background:#2e4f32;
+            padding:10px 14px;
+            border-radius:10px;
+            color:#e2f0e0;
+
+            font-weight:700;
+            text-decoration:none;
+            margin-top:10px;
+        }
+
+        .donation{
+            margin-top:20px;
+            font-size:14px;
+            text-align:center;
+            opacity:0.9;
+        }
+
+        /* Block back navigation illusion */
+        .noback{
+            position:fixed;
+            inset:0;
+            background:transparent;
+            z-index:9999;
+            pointer-events: none;
+        }
+
+        /* Layout wrapper */
+        .layout {
+            display: flex;
+            gap: 30px;
+            align-items: stretch;   /* makes left + right same height */
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Left container */
+        .left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Image */
+        .flyer img {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            object-fit: cover;      /* keeps proportions */
+            border-radius: 18px;
+        }
+
+        /* Right form */
+        #screenForm {
+            flex: 1;
+        }
+
+        /* Make layout full width on mobile */
+        @media (max-width: 768px){
+            html, body {
+                overflow-x: hidden;  /* prevent any accidental horizontal scroll */
+            }
+
+            .layout {
+                flex-direction: column;
+                gap: 25px;                /* remove gap to avoid overflow */
+                padding: 10px;            /* remove extra padding */
+                max-width: 100%;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .left, #screenContent {
+                width: 100%;
+                flex: 1 1 100%;
+                box-sizing: border-box;
+            }
+
+            .flyer img {
+                width: 100%;
+                max-height: 200px;
+                object-fit: cover;
+                display: block;
+            }
+
+            #screenContent.glass {
+                width: 100%;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+
+            #screenContent input,
+            #screenContent select,
+            #screenContent button,
+            #screenContent label {
+                box-sizing: border-box;   /* include padding in width */
+                max-width: 100%;          /* never exceed container width */
+                width: 100%;              /* stretch fully within glass */
+                display: block;           /* avoid inline quirks */
+                margin: 10px 0;           /* consistent spacing */
+            }
+        }
+
+
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <div class="left">
+        <div class="flyer" role="img" aria-label="event flyer">
+            <img src="picnicflier.jpeg" alt="The Village Picnic flyer">
+        </div>
+    </div>
+
+    <div id="screenContent" class="screen active glass">
+        <!-- This will hold either the form or the result -->
+        <div id="formContent">
+            <h2 style="font-weight:800;margin-top:0;">THE VILLAGE PICNIC 2025</h2>
+            <p style="margin-top:-10px;font-size:14px;color:#2a4a33">
+                <strong>Date:</strong> 13th December 2025 <br>
+                <strong>Time:</strong> 2pm <br>
+                <strong>Venue:</strong> 155 Mobolaji Bank Johnson Ave, Alausa
+            </p>
+
+            <label>Name</label>
+            <input id="name" type="text" placeholder="Full name"/>
+
+            <label>Phone Number</label>
+            <input id="phone" type="tel" placeholder="e.g. 0812 345 6789"/>
+
+<!--            <label>Do you stay on the island and would like to join the bus?</label>-->
+<!--            <select id="bus">-->
+<!--                <option value="">Select</option>-->
+<!--                <option value="yes">Yes</option>-->
+<!--                <option value="no">No</option>-->
+<!--            </select>-->
+
+            <button id="pickBtn">Get my colour</button>
+        </div>
+
+        <div id="resultContent" class="hidden">
+            <h2 style="font-weight:800;margin-top:0;">Your Assigned Colour</h2>
+            <div id="colorBox" class="color-box"></div>
+            <div id="textSuggest" class="suggestions"></div>
+<!--            <div id="busLinkWrap"></div>-->
+            <div class="donation">
+                Can't bring anything? Please give towards the picnic —
+                <strong>CITY CHURCH - THE VILLAGE</strong><br>
+                Access Bank • 1861224431
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+    /* Firebase */
+    const firebaseConfig = {
+        apiKey:"AIzaSyDwXcgw1gnBCovwO2wLDghhF5dKLuL5hy0",
+        authDomain:"picniccolor.firebaseapp.com",
+        projectId:"picniccolor",
+        storageBucket:"picniccolor.firebasestorage.app",
+        messagingSenderId:"1031163003082",
+        appId:"1:1031163003082:web:e4aa982ade319747d17433"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+
+    /* Data */
+    const COLORS = ['black','red','orange','yellow','green','blue','violet','white','brown'];
+    const SUGGESTIONS = {
+        black:{label:'Black',items:['Coca-Cola','Pepsi','Dark chocolate','Black grapes']},
+        red:{label:'Red',items:['Coca-Cola','Watermelon','Red apple','Strawberry cupcakes']},
+        orange:{label:'Orange',items:['Jollof rice','Plantain','Moin moin','Pasta','Fanta']},
+        yellow:{label:'Yellow',items:['Chi Exotic','Pineapple','Mango','Orange']},
+        green:{label:'Green',items:['Fried rice','Banana','Green apple','Fayrouz']},
+        blue:{label:'Blue',items:['Blueberry muffins','Blue candies','Blue drink']},
+        violet:{label:'Violet',items:['Zobo','Suya','Berry Blast','Purple cabbage salad']},
+        white:{label:'White',items:['Yoghurt','Water','Sandwich','White rice','Coconut']},
+        brown:{label:'Brown',items:['Chocolate','Cookies','Chicken','Beef','Pizza','Ofada rice']}
+    };
+
+    const bgMap = {
+        black:'#111', red:'#ef4444', orange:'#fb923c', yellow:'#facc15',
+        green:'#16a34a', blue:'#3b82f6', violet:'#7c3aed', white:'#fff',
+        brown:'#7c3a11'
+    };
+
+
+    /* DOM */
+    const pickBtn = document.getElementById("pickBtn");
+    const screenForm = document.getElementById("screenForm");
+    const screenResult = document.getElementById("screenResult");
+    const nameEl = document.getElementById("name");
+    const phoneEl = document.getElementById("phone");
+    const busEl = document.getElementById("bus");
+    const colorBox = document.getElementById("colorBox");
+    const textSuggest = document.getElementById("textSuggest");
+    const busLinkWrap = document.getElementById("busLinkWrap");
+
+    const LS_KEY = "village_picnic_assignment_v1";
+
+
+    /* On load: if saved, jump directly to result */
+    window.addEventListener("DOMContentLoaded", () => {
+        const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+        if (saved && saved.color){
+            showResult(saved.color, saved.bus);
+            goToResultScreen();
+        }
+    });
+
+
+    /* Main click */
+    pickBtn.addEventListener("click", async () => {
+        const name = nameEl.value.trim();
+        const phone = phoneEl.value.trim();
+
+        if(!name){ alert("Enter your name"); return; }
+        if(!phone){ alert("Enter your phone number"); return; }
+
+        pickBtn.disabled = true;
+        pickBtn.textContent = "Assigning…";
+
+        const color = COLORS[Math.floor(Math.random()*COLORS.length)];
+
+        // Save to Firestore
+        try{
+            await db.collection("responses").add({
+                name, phone, bus: 'no',
+                color,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }catch(e){ console.log("Firestore error", e); }
+
+        // Save locally
+        localStorage.setItem(LS_KEY, JSON.stringify({
+            name, phone, color
+        }));
+
+        // showResult(color, busEl.value);
+        showResult(color);
+        goToResultScreen();
+    });
+
+
+    /* Show final screen */
+    function showResult(color, busChoice){
+        const d = SUGGESTIONS[color];
+
+        colorBox.textContent = d.label.toUpperCase();
+        colorBox.style.background = bgMap[color];
+        colorBox.style.color = (color==="white") ? "#063" : "#fff";
+
+        textSuggest.innerHTML = `
+        <strong>Please wear a touch of ${d.label}</strong><br><br>
+        And come with one or more of the following:
+        <ul>${d.items.map(i=>`<li>${i}</li>`).join('')}</ul>
+        <div style="margin-top:6px;font-weight:600;color:#0b3b18;">You’re not restricted to these as you’re allowed to be creative with what you’ll be bringing
+</div>
+    `;
+
+        // busLinkWrap.innerHTML = (busChoice === "yes")
+        //     ? `<a class="whatsapp" target="_blank" href="https://chat.whatsapp.com/CoUHOQRF7wU3dU3xS41r97?mode=hqrt2">Join bus WhatsApp group</a>`
+        //     : "";
+    }
+
+
+
+
+    function goToResultScreen(){
+        // Hide form content
+        document.getElementById("formContent").classList.add("hidden");
+
+        // Show result content
+        document.getElementById("resultContent").classList.remove("hidden");
+
+        // Block back navigation
+        history.pushState(null, null, location.href);
+        window.onpopstate = () => {
+            history.go(1);
+        };
+
+        // Optional: add a transparent overlay to prevent scrolling back
+        if (!document.querySelector(".noback")) {
+            const blocker = document.createElement("div");
+            blocker.className = "noback";
+            document.body.appendChild(blocker);
+        }
+    }
+
+</script>
+
+</body>
+</html>
